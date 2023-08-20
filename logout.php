@@ -3,7 +3,7 @@
 // If you are using session_name("something"), don't forget it now!
 session_start();
 
-// Unset all of the session variables.
+// Unset all the session variables.
 $_SESSION = array();
 
 // If it's desired to kill the session, also delete the session cookie.

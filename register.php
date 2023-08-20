@@ -1,74 +1,56 @@
-<?php include_once './includes/db.php';
-include_once './includes/functions.php';
+<?php require './classes/Database.php';
+    require './classes/Users.php';
+    require './classes/Profile.php';
 
 session_start();
 
+$user = new Users();
+$profile = new Profile();
+
+
 $errors = [];
-$username = '';
-$password = '';
-$fullname = '';
-$email = '';
-$age = '';
-$bio = '';
+
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $db = dbConnect();
-    $username = $_POST['username'];
-    $password = $_POST['password'] ? md5($_POST['password']) : '';
-    $fullname = $_POST['fullname'];
-    $email = $_POST['email'];
-    $age = $_POST['age'];
-    $bio = $_POST['bio'];
+    $conn = new Database();
+    $db = $conn->getConnection();
+    $user->username = $_POST['username'];
+    $user->password = $_POST['password'] ? md5($_POST['password']) : '';
+    $profile->full_name = $_POST['fullname'];
+    $profile->email = $_POST['email'];
+    $profile->age = $_POST['age'];
+    $profile->bio = $_POST['bio'];
 
 
-    $errors = validateUser($username, $password, $fullname, $email);
-
-    // check if the user name is already in the db, if yes add this to the error array
+    // check if the username is already in the db, if yes add this to the error array
 
     $sqlCheckUser = "SELECT * FROM users
-                     WHERE username = ?";
-    $stmtUserCheck = mysqli_prepare($db, $sqlCheckUser);
-    mysqli_stmt_bind_param($stmtUserCheck, "s", $username);
-    if (mysqli_stmt_execute($stmtUserCheck) && !empty($username)) {
-        $reslults = mysqli_stmt_get_result($stmtUserCheck);
-        $nameUser = mysqli_fetch_array($reslults, MYSQLI_ASSOC);
-        if ($nameUser) {
+                     WHERE username = :username";
+
+    $stmt = $db->prepare($sqlCheckUser);
+    $stmt->bindValue(':username',$_POST['username'], PDO::PARAM_STR);
+    $stmt->setFetchMode(PDO::FETCH_CLASS,'Users');
+    if ($stmt->execute() ){
+        $result = $stmt->fetch();
+        if ($result){
             $errors[] = "Username exista in baza de date, alege altul!";
-        }
     }
+};
 
     if (empty($errors)) {
 
 
-        //  METHOD TO AVOID SQL INJECTIONS
-        //1.Write sql that contains placeholders for values
-        $sqlUser = "INSERT INTO users (username,password)
-            VALUES (?,?)";
-        // 2. prepare the statement
-        $stmtUser = mysqli_prepare($db, $sqlUser);
-        // 3.Bind the parameters to the placeholders
-        mysqli_stmt_bind_param($stmtUser, "ss", $username, $password);
-        // 4. we execute the statement, if return true is success
-        mysqli_stmt_execute($stmtUser);
-        $id = mysqli_insert_id($db);
-
-        // We repeat the process for the profiles table
-        $sqlProfil = "INSERT INTO profiles (user_id,full_name,email,age,bio)
-            VALUES (?,?,?,?,?)";
-        $stmtProfil = mysqli_prepare($db, $sqlProfil);
-        mysqli_stmt_bind_param($stmtProfil, "issis", $id, $fullname, $email, $age, $bio);
-
-        // after we register, we'll be logged in 
-        if (mysqli_stmt_execute($stmtProfil)) {
+        // after we register, we'll be logged in
+        if ($user->createUser($db)) {
+            $profile->user_id = $db->lastInsertId();
+            if($profile->createProfile($db)) {
             $_SESSION['is_logged_in'] = true;
-            header("Location: profile.php?id=$id");
+            header("Location: profile.php?id=$profile->user_id");
             exit;
-        } else {
-            echo mysqli_stmt_error($stmtProfil);
         }
     }
+    }
 }
-
 ?>
 
 

@@ -1,11 +1,14 @@
 <?php include_once './includes/db.php';
     require './classes/Database.php';
     require './classes/Users.php';
-
+// we start the session
 session_start();
+
+// we make the connection with the database
 $conn = new Database();
 $db = $conn->getConnection();
 
+// we get all the existing users from the database using a method from the Users class
 $users= Users::getAllUsers($db);
 ?>
 

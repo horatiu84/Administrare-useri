@@ -1,17 +1,18 @@
 <?php
-require "./includes/db.php";
-require "./includes/functions.php";
+require './classes/Database.php';
+require  './classes/Users.php';
+require './classes/Profile.php';
 
 
-
-// we must call the function for db connection
-$db = dbConnect();
+// we must call the method for db connection from the Database class
+$conn = new Database();
+$db = $conn->getConnection();
 // we check if there exist a user with the provided id
 if (isset($_GET['id'])) {
 
-    $user = getUser($db, $_GET['id']);
+    $user = Users::getById($db,$_GET['id']);
     if ($user) {
-        $id = $user['id'];
+        $id = $user->id;
     } else {
         die("User not found");
     }
@@ -21,29 +22,12 @@ if (isset($_GET['id'])) {
 
 // in case of sending the form, with the post method, we'll move to manipulate the data in db
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $profile=Profile::getById($db,$id);
 
-    // we delete the user
-    $sqlUser = "DELETE FROM users 
-            WHERE id = ?";
-    $stmtUser = mysqli_prepare($db, $sqlUser);
-    mysqli_stmt_bind_param($stmtUser, "i", $id);
-
-    // we delete the profile of the user
-    $sqlProfil = "DELETE FROM profiles 
-            WHERE user_id = ?";
-    $sqlProfil = mysqli_prepare($db, $sqlProfil);
-    mysqli_stmt_bind_param($sqlProfil, "i", $id);
-
-
-     // after deletion, we also log out the user
-    if (mysqli_stmt_execute($stmtUser) && mysqli_stmt_execute($sqlProfil)) {
-
+    if ($user->deleteUser($db) && $profile->deleteProfile($db)){
         header("Location: logout.php");
-        exit;
-    } else {
-        echo mysqli_stmt_error($stmtUser);
-        echo mysqli_stmt_error($sqlProfil);
-    }
+        exit;}
+
 }
 
 ?>
@@ -56,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <form method="post">
         
-        <p class="delete">Esti sigur ca doresti stergerea userului : <strong> <?= $user['username'] ?></strong> ?</p>
+        <p class="delete">Esti sigur ca doresti stergerea userului : <strong> <?= $user->username ?></strong> ?</p>
         <div class="form-row submit-btn links">
             <div class="input-data">
                 <div class="inner"></div>
@@ -65,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="input-data links">
                 <div class="inner"></div>
 
-                <a href="profile.php?id=<?= $user['id'] ?>">Anuleaza</a>
+                <a href="profile.php?id=<?= $user->id ?>">Anuleaza</a>
             </div>
         </div>
     </form>

@@ -1,62 +1,40 @@
-<?php include_once './includes/db.php';
-include_once './includes/functions.php';
+<?php require './classes/Database.php';
+    require './classes/Profile.php';
+
+
 // we must call the function for db connection
-$db = dbConnect();
+$conn = new Database();
+$db = $conn->getConnection();
 // we check if there exist a profile with the provided id
 if (isset($_GET['id'])) {
 
-    $profil = getProfile($db, $_GET['id']);
+    $profil = Profile::getById($db,$_GET['id']);
 
     if ($profil) {
-        $user_id = $profil['user_id'];
-        $fullname = $profil['full_name'];
-        $email = $profil['email'];
-        $age = $profil['age'];
-        $bio = $profil['bio'];
+        $user_id = $profil->user_id;
+        $fullname = $profil->full_name;
+        $email = $profil->email;
+        $age = $profil->age;
+        $bio = $profil->bio;
     } else {
         die("Profilul nu a fost gasit");
     }
 } else {
     die("Id inexistent, Profilul nu a fost gasit");
-    $profil = null;
 }
 // in case of sending the form, with the post method, we'll move to manipulate the data in db
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
 
-    $fullname = $_POST['fullname'];
-    $email = $_POST['email'];
-    $age = $_POST['age'];
-    $bio = $_POST['bio'];
+    $profil->full_name = $_POST['fullname'];
+    $profil->email = $_POST['email'];
+    $profil->age = $_POST['age'];
+    $profil->bio = $_POST['bio'];
 
-    // we validate the profile
-    $errors = validateProfil($fullname, $email);
-
-    // if no errors, we proceed to edit the profile
-    if (empty($errors)) {
-
-        $sql = "UPDATE profiles 
-                SET full_name = ?,
-                    email = ?,
-                    age = ?,
-                    bio = ?
-                WHERE user_id = ?";
-
-        $stmt = mysqli_prepare($db, $sql);
-
-        mysqli_stmt_bind_param($stmt, "ssisi", $fullname, $email, $age, $bio, $user_id);
-
-
-        if (mysqli_stmt_execute($stmt)) {
-
+    if($profil->update($db)) {
             header("Location: profile.php?id=$user_id");
             exit;
-        } else {
-            echo mysqli_stmt_error($stmt);
-        }
     }
 }
-
 
 ?>
 
