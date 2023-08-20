@@ -1,12 +1,12 @@
 <?php include_once './includes/db.php';
+    require './classes/Database.php';
+    require './classes/Users.php';
+
 session_start();
-$db = dbConnect();
-$sql = "SELECT * FROM users
-        ORDER BY id";
+$conn = new Database();
+$db = $conn->getConnection();
 
-$results = mysqli_query($db, $sql);
-
-$users = mysqli_fetch_all($results, MYSQLI_ASSOC);
+$users= Users::getAllUsers($db);
 ?>
 
 <?php include_once './includes/header.php'; ?>
