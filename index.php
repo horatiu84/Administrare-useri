@@ -1,4 +1,4 @@
-<?php include_once './includes/db.php';
+<?php
     require './classes/Database.php';
     require './classes/Users.php';
 // we start the session

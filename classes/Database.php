@@ -23,11 +23,10 @@ class Database
         try {
             $db =  new PDO($dsn,$user,$password);
             $db->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
-            echo "Success";
             return $db;
         } catch (PDOException $e) {
             echo $e->getMessage();
             exit;
         }
     }
-};
+}
